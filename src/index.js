@@ -1,25 +1,27 @@
 import './styles/style.css';
-import { createTodo } from './modules/todo.js';
-import { createProject } from './modules/project.js';
+import { projectManager } from './modules/projectManager.js';
 
-// Create a project
-const inboxProject = createProject({
-  name: 'Inbox',
-  id: 'inbox-default',
-  isDefault: true,
-});
+// 1. Initialize default state
+projectManager.initDefaultState();
+console.log('--- Initial State ---');
+console.log('Projects:', projectManager.getProjects());
+console.log('Active Project:', projectManager.getActiveProject());
 
-// Create a todo item
-const firstTodo = createTodo({
-  title: 'Set up Project Architecture',
-  description: 'Factories, State Manager, and LocalStorage',
-  dueDate: '2026-08-25',
+// 2. Add a new Project
+const college = projectManager.addProject('College');
+console.log('Added Project:', college);
+
+// 3. Add a Todo to the new Project
+const mathTask = projectManager.addTodo(college.id, {
+  title: 'Complete Calculus Assignment',
+  dueDate: '2026-09-01',
   priority: 'high',
-  projectId: inboxProject.id,
 });
+console.log('Added Todo:', mathTask);
 
-// Add todo to project
-inboxProject.todos.push(firstTodo);
+// 4. Toggle completion
+projectManager.toggleTodoComplete(college.id, mathTask.id);
+console.log('After Toggling Complete:', projectManager.getTodo(college.id, mathTask.id));
 
-console.log('Project created with todo:');
-console.log(inboxProject);
+// 5. Test State snapshot for storage
+console.log('Full State Snapshot:', projectManager.getState());

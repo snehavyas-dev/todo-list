@@ -27,3 +27,4 @@ export function createProject({
     todos: Array.isArray(todos) ? todos : [],
   };
 }
+
