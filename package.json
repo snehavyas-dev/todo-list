@@ -1,0 +1,20 @@
+{
+  "name": "todo-list",
+  "version": "1.0.0",
+  "description": "The Odin Project - Modern Todo List Application",
+  "private": true,
+  "scripts": {
+    "start": "webpack serve --open --mode development",
+    "build": "webpack --mode production",
+    "watch": "webpack --watch --mode development"
+  },
+  "keywords": [
+    "javascript",
+    "odin-project",
+    "todo-list",
+    "webpack"
+  ],
+  "author": "",
+  "license": "ISC"
+}
+
