@@ -348,3 +348,4 @@ export const displayController = {
       .replace(/'/g, '&#039;');
   },
 };
+
