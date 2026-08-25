@@ -1,291 +1,375 @@
 import { createTodo } from './todo.js';
 import { createProject } from './project.js';
 
-// In-memory application state (Single Source of Truth)
+// In-memory application state
 let projects = [];
-let activeProjectId = null;
+let activeViewId = 'view-inbox'; // Can be 'view-inbox', 'view-today', 'view-upcoming', 'view-high-priority', or a projectId
+let lastDeletedTask = null; // For Undo feature
+let sortBy = 'default'; // 'default', 'date', 'priority', 'name'
+let searchQuery = '';
 
 export const projectManager = {
   /**
-   * Initializes the state with default projects and sample tasks
-   * (Used when no data exists in localStorage)
+   * Initializes state with sample projects and tasks
    */
   initDefaultState() {
     projects = [];
 
-    // Default Inbox project (cannot be deleted)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 4);
+    const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+    // Default Inbox
     const inbox = createProject({
       id: 'inbox-default',
       name: 'Inbox',
+      color: '#6366f1',
       isDefault: true,
     });
 
-    // Sample welcome tasks
     const task1 = createTodo({
-      title: 'Welcome to TaskFlow! 👋',
-      description: 'Click this task to view its details or edit its contents.',
-      dueDate: new Date().toISOString().split('T')[0],
+      title: 'Welcome to TaskFlow Pro! 👋',
+      description: 'Click this card to view details, edit fields, or mark complete.',
+      dueDate: todayStr,
       priority: 'high',
-      notes: 'You can organize tasks with due dates, notes, and priorities.',
+      notes: 'Try out keyboard shortcuts: press / to search or N to create a new task.',
       projectId: inbox.id,
     });
 
     const task2 = createTodo({
-      title: 'Create a new project 📁',
-      description: 'Use the "+ New Project" button on the sidebar to organize work, personal, or study goals.',
-      dueDate: '',
+      title: 'Explore Smart Views (Today & Upcoming)',
+      description: 'Tasks with due dates automatically appear in Today and Upcoming smart views.',
+      dueDate: tomorrowStr,
       priority: 'medium',
-      notes: 'Each project has its own dedicated task list.',
+      notes: 'Check the sidebar navigation for instant smart filters.',
       projectId: inbox.id,
     });
 
     inbox.todos.push(task1, task2);
     projects.push(inbox);
 
-    // Additional sample project
-    const workProject = createProject({
-      name: 'Work',
+    // College Project
+    const college = createProject({
+      name: 'College',
+      color: '#8b5cf6',
       isDefault: false,
     });
 
-    const workTask = createTodo({
-      title: 'Review Odin Project guidelines',
-      description: 'Check criteria for Todo List requirements.',
-      dueDate: '',
-      priority: 'low',
-      projectId: workProject.id,
+    const collegeTask1 = createTodo({
+      title: 'CS450: Research Paper Draft',
+      description: 'Draft literature review on distributed systems architecture.',
+      dueDate: nextWeekStr,
+      priority: 'high',
+      notes: 'Reference IEEE papers and system benchmarks.',
+      projectId: college.id,
     });
 
-    workProject.todos.push(workTask);
-    projects.push(workProject);
+    const collegeTask2 = createTodo({
+      title: 'Physics Lab: Wave Mechanics Report',
+      description: 'Compile lab dataset and graph frequency resonance.',
+      dueDate: '',
+      priority: 'medium',
+      notes: 'Lab partner: Alex',
+      projectId: college.id,
+    });
 
-    activeProjectId = inbox.id;
+    const collegeTask3 = createTodo({
+      title: 'Math Seminar: Presentation Prep',
+      description: 'Prepare slides on eigenvalue decompositions.',
+      dueDate: '',
+      priority: 'low',
+      completed: true,
+      projectId: college.id,
+    });
+
+    college.todos.push(collegeTask1, collegeTask2, collegeTask3);
+    projects.push(college);
+
+    // Work Project
+    const work = createProject({
+      name: 'Work',
+      color: '#059669',
+      isDefault: false,
+    });
+
+    const workTask1 = createTodo({
+      title: 'Sprint Retrospective and Planning',
+      description: 'Review velocity and backlog grooming for next milestone.',
+      dueDate: todayStr,
+      priority: 'high',
+      projectId: work.id,
+    });
+
+    work.todos.push(workTask1);
+    projects.push(work);
+
+    activeViewId = 'view-inbox';
   },
 
-  /**
-   * Returns all current projects
-   * @returns {Array} List of project objects
-   */
   getProjects() {
     return projects;
   },
 
-  /**
-   * Returns the ID of the currently active project
-   * @returns {string|null}
-   */
-  getActiveProjectId() {
-    return activeProjectId;
+  getActiveViewId() {
+    return activeViewId;
   },
 
-  /**
-   * Changes the active project ID
-   * @param {string} id
-   */
-  setActiveProjectId(id) {
-    const exists = projects.some((project) => project.id === id);
-    if (exists) {
-      activeProjectId = id;
-    }
+  setActiveViewId(id) {
+    activeViewId = id;
   },
 
-  /**
-   * Returns the currently active project object
-   * @returns {Object}
-   */
-  getActiveProject() {
-    let project = projects.find((p) => p.id === activeProjectId);
-    if (!project && projects.length > 0) {
-      project = projects[0];
-      activeProjectId = project.id;
-    }
-    return project;
+  setSortBy(sortType) {
+    sortBy = sortType;
   },
 
-  /**
-   * Finds a project by its ID
-   * @param {string} projectId
-   * @returns {Object|undefined}
-   */
+  getSortBy() {
+    return sortBy;
+  },
+
+  setSearchQuery(query) {
+    searchQuery = (query || '').trim().toLowerCase();
+  },
+
+  getSearchQuery() {
+    return searchQuery;
+  },
+
   getProjectById(projectId) {
-    return projects.find((project) => project.id === projectId);
+    return projects.find((p) => p.id === projectId);
   },
 
-  /**
-   * Creates and adds a new project
-   * @param {string} name - Name of the new project
-   * @returns {Object} The created project
-   */
-  addProject(name) {
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      throw new Error('Project name cannot be empty.');
-    }
+  addProject(name, color = '#6366f1') {
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error('Project name cannot be empty.');
 
-    const newProject = createProject({ name: trimmedName });
+    const newProject = createProject({ name: trimmed, color });
     projects.push(newProject);
-    activeProjectId = newProject.id;
+    activeViewId = newProject.id;
     return newProject;
   },
 
-  /**
-   * Deletes a project by ID
-   * @param {string} projectId
-   * @returns {boolean} True if deleted, false otherwise
-   */
   deleteProject(projectId) {
-    const projectToDelete = this.getProjectById(projectId);
-    if (!projectToDelete) return false;
+    const proj = this.getProjectById(projectId);
+    if (!proj || proj.isDefault) return false;
 
-    // Prevent deleting default project (Inbox)
-    if (projectToDelete.isDefault) {
-      throw new Error('Cannot delete the default Inbox project.');
+    projects = projects.filter((p) => p.id !== projectId);
+    if (activeViewId === projectId) {
+      activeViewId = 'view-inbox';
     }
-
-    projects = projects.filter((project) => project.id !== projectId);
-
-    // If active project was deleted, fallback to the default Inbox project
-    if (activeProjectId === projectId) {
-      const defaultProject = projects.find((p) => p.isDefault) || projects[0];
-      activeProjectId = defaultProject ? defaultProject.id : null;
-    }
-
     return true;
   },
 
-  /**
-   * Adds a new Todo to a specified project
-   * @param {string} projectId
-   * @param {Object} todoData
-   * @returns {Object} The created Todo item
-   */
   addTodo(projectId, todoData) {
-    const project = this.getProjectById(projectId);
-    if (!project) {
-      throw new Error(`Project with ID "${projectId}" does not exist.`);
+    let targetProjectId = projectId;
+    if (!targetProjectId || targetProjectId.startsWith('view-')) {
+      targetProjectId = projects.find((p) => p.isDefault)?.id || projects[0].id;
     }
 
-    const newTodo = createTodo({
-      ...todoData,
-      projectId,
-    });
+    const project = this.getProjectById(targetProjectId);
+    if (!project) throw new Error(`Project ${targetProjectId} not found.`);
 
+    const newTodo = createTodo({ ...todoData, projectId: targetProjectId });
     project.todos.push(newTodo);
     return newTodo;
   },
 
-  /**
-   * Retrieves a specific Todo from a project
-   * @param {string} projectId
-   * @param {string} todoId
-   * @returns {Object|undefined}
-   */
   getTodo(projectId, todoId) {
-    const project = this.getProjectById(projectId);
-    if (!project) return undefined;
-    return project.todos.find((todo) => todo.id === todoId);
+    if (projectId) {
+      const project = this.getProjectById(projectId);
+      if (project) return project.todos.find((t) => t.id === todoId);
+    }
+    // Search across all projects if not specified
+    for (const project of projects) {
+      const found = project.todos.find((t) => t.id === todoId);
+      if (found) return found;
+    }
+    return undefined;
   },
 
-  /**
-   * Deletes a Todo from a project
-   * @param {string} projectId
-   * @param {string} todoId
-   * @returns {boolean}
-   */
   deleteTodo(projectId, todoId) {
-    const project = this.getProjectById(projectId);
-    if (!project) return false;
-
-    const initialCount = project.todos.length;
-    project.todos = project.todos.filter((todo) => todo.id !== todoId);
-    return project.todos.length < initialCount;
+    for (const project of projects) {
+      const index = project.todos.findIndex((t) => t.id === todoId);
+      if (index !== -1) {
+        lastDeletedTask = {
+          todo: project.todos[index],
+          projectId: project.id,
+        };
+        project.todos.splice(index, 1);
+        return true;
+      }
+    }
+    return false;
   },
 
-  /**
-   * Toggles the completed status of a Todo
-   * @param {string} projectId
-   * @param {string} todoId
-   * @returns {boolean} The new completion status
-   */
+  undoDelete() {
+    if (!lastDeletedTask) return null;
+    const project = this.getProjectById(lastDeletedTask.projectId);
+    if (project) {
+      project.todos.push(lastDeletedTask.todo);
+      const restored = lastDeletedTask;
+      lastDeletedTask = null;
+      return restored;
+    }
+    return null;
+  },
+
   toggleTodoComplete(projectId, todoId) {
     const todo = this.getTodo(projectId, todoId);
-    if (!todo) {
-      throw new Error(`Todo with ID "${todoId}" not found in project "${projectId}".`);
-    }
-
+    if (!todo) return false;
     todo.completed = !todo.completed;
     return todo.completed;
   },
 
-  /**
-   * Updates fields of an existing Todo
-   * @param {string} projectId
-   * @param {string} todoId
-   * @param {Object} updatedFields
-   * @returns {Object} The updated Todo
-   */
   editTodo(projectId, todoId, updatedFields) {
     const todo = this.getTodo(projectId, todoId);
-    if (!todo) {
-      throw new Error(`Todo with ID "${todoId}" not found.`);
-    }
+    if (!todo) throw new Error('Todo not found.');
 
-    if (updatedFields.title !== undefined) {
-      if (!updatedFields.title.trim()) {
-        throw new Error('Todo title cannot be empty.');
-      }
-      todo.title = updatedFields.title.trim();
-    }
-
-    if (updatedFields.description !== undefined) {
-      todo.description = updatedFields.description.trim();
-    }
-
-    if (updatedFields.dueDate !== undefined) {
-      todo.dueDate = updatedFields.dueDate;
-    }
-
-    if (updatedFields.priority !== undefined) {
-      const validPriorities = ['low', 'medium', 'high'];
-      if (validPriorities.includes(updatedFields.priority.toLowerCase())) {
-        todo.priority = updatedFields.priority.toLowerCase();
-      }
-    }
-
-    if (updatedFields.notes !== undefined) {
-      todo.notes = updatedFields.notes.trim();
-    }
-
-    if (updatedFields.completed !== undefined) {
-      todo.completed = Boolean(updatedFields.completed);
-    }
+    if (updatedFields.title !== undefined) todo.title = updatedFields.title.trim();
+    if (updatedFields.description !== undefined) todo.description = updatedFields.description.trim();
+    if (updatedFields.dueDate !== undefined) todo.dueDate = updatedFields.dueDate;
+    if (updatedFields.priority !== undefined) todo.priority = updatedFields.priority.toLowerCase();
+    if (updatedFields.notes !== undefined) todo.notes = updatedFields.notes.trim();
+    if (updatedFields.completed !== undefined) todo.completed = Boolean(updatedFields.completed);
 
     return todo;
   },
 
   /**
-   * Returns the full state for serialization to localStorage
-   * @returns {Object}
+   * Calculates pending task counts for smart views
    */
-  getState() {
+  getSmartViewCounts() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const next7Days = new Date();
+    next7Days.setDate(next7Days.getDate() + 7);
+    const next7DaysStr = next7Days.toISOString().split('T')[0];
+
+    const allTodos = projects.flatMap((p) => p.todos);
+    const inboxTodos = (projects.find((p) => p.isDefault)?.todos || []);
+
     return {
-      projects,
-      activeProjectId,
+      inbox: inboxTodos.filter((t) => !t.completed).length,
+      today: allTodos.filter((t) => !t.completed && t.dueDate === todayStr).length,
+      upcoming: allTodos.filter((t) => !t.completed && t.dueDate > todayStr && t.dueDate <= next7DaysStr).length,
+      highPriority: allTodos.filter((t) => !t.completed && t.priority === 'high').length,
     };
   },
 
   /**
-   * Restores state from parsed localStorage data
-   * Rehydrates objects through factories for integrity
-   * @param {Object} savedState
+   * Returns data bundle for the currently active view (smart view or custom project)
    */
+  getCurrentViewData() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const next7Days = new Date();
+    next7Days.setDate(next7Days.getDate() + 7);
+    const next7DaysStr = next7Days.toISOString().split('T')[0];
+
+    let title = 'Inbox';
+    let isSmartView = false;
+    let projectColor = '#6366f1';
+    let targetProject = null;
+    let todos = [];
+
+    if (activeViewId === 'view-inbox') {
+      targetProject = projects.find((p) => p.isDefault) || projects[0];
+      title = 'Inbox';
+      todos = targetProject ? [...targetProject.todos] : [];
+    } else if (activeViewId === 'view-today') {
+      title = 'Today';
+      isSmartView = true;
+      todos = projects.flatMap((p) => p.todos).filter((t) => t.dueDate === todayStr);
+    } else if (activeViewId === 'view-upcoming') {
+      title = 'Upcoming';
+      isSmartView = true;
+      todos = projects.flatMap((p) => p.todos).filter((t) => t.dueDate >= todayStr && t.dueDate <= next7DaysStr);
+    } else if (activeViewId === 'view-high-priority') {
+      title = 'High Priority';
+      isSmartView = true;
+      todos = projects.flatMap((p) => p.todos).filter((t) => t.priority === 'high');
+    } else {
+      targetProject = this.getProjectById(activeViewId);
+      if (!targetProject) {
+        targetProject = projects[0];
+        activeViewId = targetProject.id;
+      }
+      title = targetProject.name;
+      projectColor = targetProject.color;
+      todos = [...targetProject.todos];
+    }
+
+    // Apply live search filter if active
+    if (searchQuery) {
+      todos = todos.filter(
+        (t) =>
+          t.title.toLowerCase().includes(searchQuery) ||
+          t.description.toLowerCase().includes(searchQuery) ||
+          t.notes.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    // Apply sorting
+    todos = this.sortTodos(todos, sortBy);
+
+    const total = todos.length;
+    const completed = todos.filter((t) => t.completed).length;
+    const pending = total - completed;
+    const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return {
+      viewId: activeViewId,
+      title,
+      isSmartView,
+      projectColor,
+      project: targetProject,
+      todos,
+      total,
+      completed,
+      pending,
+      progressPercent,
+    };
+  },
+
+  /**
+   * Sorts array of todos based on selected criteria
+   */
+  sortTodos(todosList, sortType) {
+    const list = [...todosList];
+    if (sortType === 'date') {
+      return list.sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
+    }
+    if (sortType === 'priority') {
+      const weight = { high: 1, medium: 2, low: 3 };
+      return list.sort((a, b) => (weight[a.priority] || 4) - (weight[b.priority] || 4));
+    }
+    if (sortType === 'name') {
+      return list.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    // Default: uncompleted first, then by creation date
+    return list.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+  },
+
+  getState() {
+    return {
+      projects,
+      activeViewId,
+      sortBy,
+    };
+  },
+
   loadState(savedState) {
     if (!savedState || !Array.isArray(savedState.projects) || savedState.projects.length === 0) {
       this.initDefaultState();
       return;
     }
 
-    // Rehydrate projects and their nested todos using factories
     projects = savedState.projects.map((projectData) => {
       const rehydratedTodos = (projectData.todos || []).map((todoData) =>
         createTodo({
@@ -297,14 +381,13 @@ export const projectManager = {
       return createProject({
         id: projectData.id,
         name: projectData.name,
+        color: projectData.color || '#6366f1',
         isDefault: Boolean(projectData.isDefault),
         todos: rehydratedTodos,
       });
     });
 
-    // Restore active project or fallback to first
-    const activeProjectExists = projects.some((p) => p.id === savedState.activeProjectId);
-    activeProjectId = activeProjectExists ? savedState.activeProjectId : projects[0].id;
+    activeViewId = savedState.activeViewId || 'view-inbox';
+    sortBy = savedState.sortBy || 'default';
   },
 };
-

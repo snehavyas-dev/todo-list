@@ -143,3 +143,4 @@ During this project from **The Odin Project**, I practiced:
 - [ ] Add drag-and-drop task reordering.
 - [ ] Add search / filter by priority or due date (Today / Upcoming / Overdue).
 - [ ] Add project color tag customization.
+

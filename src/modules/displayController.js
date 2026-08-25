@@ -1,83 +1,105 @@
 /**
- * Display Controller Module
- * Responsible strictly for DOM creation, rendering, and modal visibility.
- * Does NOT directly mutate application state.
+ * Display Controller Module (TaskFlow Pro)
+ * Pure DOM rendering, UI updates, and dialog management.
  */
 export const displayController = {
-  // DOM element caches
-  elements: {
-    projectList: document.getElementById('project-list'),
-    activeProjectTitle: document.getElementById('active-project-title'),
-    projectStats: document.getElementById('project-stats'),
-    projectActions: document.getElementById('project-actions'),
-    taskList: document.getElementById('task-list'),
-    emptyState: document.getElementById('empty-state'),
-    
-    // Modals
-    taskDialog: document.getElementById('task-dialog'),
-    taskForm: document.getElementById('task-form'),
-    taskDialogHeading: document.getElementById('task-dialog-heading'),
-    
-    projectDialog: document.getElementById('project-dialog'),
-    projectForm: document.getElementById('project-form'),
-    
-    detailDialog: document.getElementById('detail-dialog'),
-    
-    // Mobile Navigation
-    sidebar: document.getElementById('sidebar'),
-    sidebarBackdrop: document.getElementById('sidebar-backdrop'),
-  },
+  elements: {},
 
-  /**
-   * Initializes and caches references (if needed after initial DOM mount)
-   */
   initElements() {
-    this.elements.projectList = document.getElementById('project-list');
-    this.elements.activeProjectTitle = document.getElementById('active-project-title');
-    this.elements.projectStats = document.getElementById('project-stats');
-    this.elements.projectActions = document.getElementById('project-actions');
-    this.elements.taskList = document.getElementById('task-list');
-    this.elements.emptyState = document.getElementById('empty-state');
-    this.elements.taskDialog = document.getElementById('task-dialog');
-    this.elements.taskForm = document.getElementById('task-form');
-    this.elements.taskDialogHeading = document.getElementById('task-dialog-heading');
-    this.elements.projectDialog = document.getElementById('project-dialog');
-    this.elements.projectForm = document.getElementById('project-form');
-    this.elements.detailDialog = document.getElementById('detail-dialog');
-    this.elements.sidebar = document.getElementById('sidebar');
-    this.elements.sidebarBackdrop = document.getElementById('sidebar-backdrop');
+    this.elements = {
+      // Navigation & Views
+      smartViewsList: document.getElementById('smart-views-list'),
+      projectList: document.getElementById('project-list'),
+      countInbox: document.getElementById('count-inbox'),
+      countToday: document.getElementById('count-today'),
+      countUpcoming: document.getElementById('count-upcoming'),
+      countHighPriority: document.getElementById('count-high-priority'),
+
+      // Header & Search
+      globalSearch: document.getElementById('global-search'),
+
+      // Workspace Header
+      headerColorDot: document.getElementById('header-color-dot'),
+      activeProjectTitle: document.getElementById('active-project-title'),
+      progressBarFill: document.getElementById('progress-bar-fill'),
+      progressPercent: document.getElementById('progress-percent'),
+      projectStats: document.getElementById('project-stats'),
+      sortSelect: document.getElementById('sort-select'),
+      projectActions: document.getElementById('project-actions'),
+
+      // Task List & Empty State
+      taskList: document.getElementById('task-list'),
+      emptyState: document.getElementById('empty-state'),
+      emptyStateTitle: document.getElementById('empty-state-title'),
+      emptyStateDesc: document.getElementById('empty-state-desc'),
+
+      // Modals
+      taskDialog: document.getElementById('task-dialog'),
+      taskForm: document.getElementById('task-form'),
+      taskDialogHeading: document.getElementById('task-dialog-heading'),
+      taskProjectSelect: document.getElementById('task-input-project-select'),
+
+      projectDialog: document.getElementById('project-dialog'),
+      projectForm: document.getElementById('project-form'),
+
+      detailDialog: document.getElementById('detail-dialog'),
+
+      // Toast Container
+      toastContainer: document.getElementById('toast-container'),
+
+      // Mobile Navigation
+      sidebar: document.getElementById('sidebar'),
+      sidebarBackdrop: document.getElementById('sidebar-backdrop'),
+    };
   },
 
   /**
-   * Renders the list of projects in the sidebar
-   * @param {Array} projects - All project objects
-   * @param {string} activeProjectId - Current active project ID
+   * Renders sidebar smart views counters and highlights the active view
    */
-  renderProjects(projects, activeProjectId) {
+  renderSmartViews(counts, activeViewId) {
+    if (!this.elements.smartViewsList) this.initElements();
+
+    if (this.elements.countInbox) this.elements.countInbox.textContent = counts.inbox;
+    if (this.elements.countToday) this.elements.countToday.textContent = counts.today;
+    if (this.elements.countUpcoming) this.elements.countUpcoming.textContent = counts.upcoming;
+    if (this.elements.countHighPriority) this.elements.countHighPriority.textContent = counts.highPriority;
+
+    const smartItems = this.elements.smartViewsList.querySelectorAll('.nav-item');
+    smartItems.forEach((item) => {
+      const view = item.dataset.view;
+      if (view === activeViewId) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  },
+
+  /**
+   * Renders custom projects list with colored dots and count badges
+   */
+  renderProjects(projects, activeViewId) {
     if (!this.elements.projectList) this.initElements();
     this.elements.projectList.innerHTML = '';
 
-    projects.forEach((project) => {
+    // Only render non-default projects in the custom projects list (Inbox is in smart views)
+    const customProjects = projects.filter((p) => !p.isDefault);
+
+    customProjects.forEach((project) => {
       const li = document.createElement('li');
-      li.className = `project-item ${project.id === activeProjectId ? 'active' : ''}`;
+      li.className = `nav-item ${project.id === activeViewId ? 'active' : ''}`;
       li.dataset.projectId = project.id;
       li.setAttribute('role', 'button');
       li.setAttribute('tabindex', '0');
 
-      // Uncompleted tasks count
       const pendingCount = project.todos.filter((t) => !t.completed).length;
 
-      // Icon (Inbox icon for default, folder icon for custom projects)
-      const iconSvg = project.isDefault
-        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-
       li.innerHTML = `
-        <div class="project-item-left">
-          <span class="project-item-icon">${iconSvg}</span>
-          <span class="project-name">${this.escapeHtml(project.name)}</span>
+        <div class="nav-item-left">
+          <span class="project-dot" style="background-color: ${project.color || '#6366f1'}; box-shadow: 0 0 8px ${project.color}66;"></span>
+          <span class="nav-item-name">${this.escapeHtml(project.name)}</span>
         </div>
-        <span class="project-count">${pendingCount}</span>
+        <span class="nav-count">${pendingCount}</span>
       `;
 
       this.elements.projectList.appendChild(li);
@@ -85,50 +107,56 @@ export const displayController = {
   },
 
   /**
-   * Renders the active project header, stats, actions, and its tasks
-   * @param {Object} activeProject
+   * Renders workspace header, progress bar, sorting state, and tasks
    */
-  renderActiveProject(activeProject) {
-    if (!activeProject) return;
+  renderWorkspace(viewData, projects) {
     if (!this.elements.activeProjectTitle) this.initElements();
 
-    // 1. Update Title
-    this.elements.activeProjectTitle.textContent = activeProject.name;
-
-    // 2. Update Stats
-    const total = activeProject.todos.length;
-    const completed = activeProject.todos.filter((t) => t.completed).length;
-    const pending = total - completed;
-
-    this.elements.projectStats.textContent =
-      total === 0
-        ? '0 tasks'
-        : `${pending} remaining · ${completed} completed`;
-
-    // 3. Render Actions (Delete Project button for non-default projects)
-    this.elements.projectActions.innerHTML = '';
-    if (!activeProject.isDefault) {
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn-danger-outline';
-      deleteBtn.dataset.action = 'delete-project';
-      deleteBtn.dataset.projectId = activeProject.id;
-      deleteBtn.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        Delete Project
-      `;
-      this.elements.projectActions.appendChild(deleteBtn);
+    // 1. Title & Color Indicator
+    this.elements.activeProjectTitle.textContent = viewData.title;
+    if (this.elements.headerColorDot) {
+      this.elements.headerColorDot.style.backgroundColor = viewData.projectColor;
+      this.elements.headerColorDot.style.boxShadow = `0 0 10px ${viewData.projectColor}66`;
     }
 
-    // 4. Render Tasks
-    this.renderTasks(activeProject.todos, activeProject.id);
+    // 2. Progress Bar & Stats
+    if (this.elements.progressBarFill) {
+      this.elements.progressBarFill.style.width = `${viewData.progressPercent}%`;
+    }
+    if (this.elements.progressPercent) {
+      this.elements.progressPercent.textContent = `${viewData.progressPercent}% Completed`;
+    }
+    if (this.elements.projectStats) {
+      this.elements.projectStats.textContent =
+        viewData.total === 0
+          ? '0 tasks'
+          : `${viewData.completed} of ${viewData.total} done (${viewData.pending} remaining)`;
+    }
+
+    // 3. Delete Project Action (only if custom project)
+    if (this.elements.projectActions) {
+      this.elements.projectActions.innerHTML = '';
+      if (!viewData.isSmartView && viewData.project && !viewData.project.isDefault) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-danger-outline';
+        deleteBtn.dataset.action = 'delete-project';
+        deleteBtn.dataset.projectId = viewData.project.id;
+        deleteBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Delete
+        `;
+        this.elements.projectActions.appendChild(deleteBtn);
+      }
+    }
+
+    // 4. Render Task Cards
+    this.renderTasks(viewData.todos, projects);
   },
 
   /**
-   * Renders the list of tasks for the current project
-   * @param {Array} todos
-   * @param {string} projectId
+   * Renders the list of task cards
    */
-  renderTasks(todos, projectId) {
+  renderTasks(todos, projects) {
     this.elements.taskList.innerHTML = '';
 
     if (!todos || todos.length === 0) {
@@ -144,9 +172,15 @@ export const displayController = {
       const card = document.createElement('li');
       card.className = `task-card priority-${todo.priority} ${todo.completed ? 'completed' : ''}`;
       card.dataset.todoId = todo.id;
-      card.dataset.projectId = projectId;
+      card.dataset.projectId = todo.projectId;
 
       const formattedDate = todo.dueDate ? this.formatDisplayDate(todo.dueDate) : '';
+
+      // Project tag label if in a multi-project smart view
+      const projectObj = projects.find((p) => p.id === todo.projectId);
+      const projectBadge = projectObj
+        ? `<span style="font-size:0.75rem; color:${projectObj.color || '#6366f1'}; font-weight:700;">● ${this.escapeHtml(projectObj.name)}</span>`
+        : '';
 
       card.innerHTML = `
         <div class="task-card-left">
@@ -157,12 +191,13 @@ export const displayController = {
               ${todo.completed ? 'checked' : ''} 
               data-action="toggle-complete" 
               data-todo-id="${todo.id}"
-              data-project-id="${projectId}"
-              aria-label="Mark task as complete"
+              data-project-id="${todo.projectId}"
+              aria-label="Toggle complete"
             >
           </div>
-          <div class="task-info" data-action="view-detail" data-todo-id="${todo.id}" data-project-id="${projectId}">
+          <div class="task-info" data-action="view-detail" data-todo-id="${todo.id}" data-project-id="${todo.projectId}">
             <span class="task-title">${this.escapeHtml(todo.title)}</span>
+            ${projectBadge}
           </div>
         </div>
 
@@ -170,17 +205,17 @@ export const displayController = {
           ${
             formattedDate
               ? `<span class="task-due-date" title="Due Date">
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                    ${formattedDate}
                  </span>`
               : ''
           }
           <span class="badge priority-${todo.priority}">${todo.priority}</span>
           <div class="task-actions">
-            <button class="btn-icon" data-action="edit-task" data-todo-id="${todo.id}" data-project-id="${projectId}" title="Edit Task" aria-label="Edit task">
+            <button class="btn-icon" data-action="edit-task" data-todo-id="${todo.id}" data-project-id="${todo.projectId}" title="Edit Task" aria-label="Edit task">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            <button class="btn-icon btn-icon-danger" data-action="delete-task" data-todo-id="${todo.id}" data-project-id="${projectId}" title="Delete Task" aria-label="Delete task">
+            <button class="btn-icon btn-icon-danger" data-action="delete-task" data-todo-id="${todo.id}" data-project-id="${todo.projectId}" title="Delete Task" aria-label="Delete task">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
           </div>
@@ -192,14 +227,22 @@ export const displayController = {
   },
 
   /**
-   * Opens the Task Modal in either 'create' or 'edit' mode
-   * @param {('create'|'edit')} mode
-   * @param {Object} [taskData=null]
-   * @param {string} [projectId='']
+   * Opens the Task Modal with pre-populated project dropdown options
    */
-  openTaskModal(mode = 'create', taskData = null, projectId = '') {
+  openTaskModal(mode = 'create', taskData = null, defaultProjectId = '', projects = []) {
     if (!this.elements.taskDialog) this.initElements();
     this.elements.taskForm.reset();
+
+    // Populate project select options
+    if (this.elements.taskProjectSelect && projects.length > 0) {
+      this.elements.taskProjectSelect.innerHTML = '';
+      projects.forEach((p) => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        this.elements.taskProjectSelect.appendChild(option);
+      });
+    }
 
     const idInput = document.getElementById('task-input-id');
     const projectInput = document.getElementById('task-input-project-id');
@@ -212,7 +255,8 @@ export const displayController = {
     if (mode === 'edit' && taskData) {
       this.elements.taskDialogHeading.textContent = 'Edit Task';
       idInput.value = taskData.id;
-      projectInput.value = projectId || taskData.projectId;
+      projectInput.value = taskData.projectId;
+      if (this.elements.taskProjectSelect) this.elements.taskProjectSelect.value = taskData.projectId;
       titleInput.value = taskData.title;
       descInput.value = taskData.description || '';
       dateInput.value = taskData.dueDate || '';
@@ -221,7 +265,9 @@ export const displayController = {
     } else {
       this.elements.taskDialogHeading.textContent = 'Create Task';
       idInput.value = '';
-      projectInput.value = projectId;
+      const chosenProj = defaultProjectId && !defaultProjectId.startsWith('view-') ? defaultProjectId : (projects[0]?.id || 'inbox-default');
+      projectInput.value = chosenProj;
+      if (this.elements.taskProjectSelect) this.elements.taskProjectSelect.value = chosenProj;
       priorityInput.value = 'medium';
     }
 
@@ -230,9 +276,7 @@ export const displayController = {
   },
 
   closeTaskModal() {
-    if (this.elements.taskDialog) {
-      this.elements.taskDialog.close();
-    }
+    if (this.elements.taskDialog) this.elements.taskDialog.close();
   },
 
   openProjectModal() {
@@ -244,16 +288,9 @@ export const displayController = {
   },
 
   closeProjectModal() {
-    if (this.elements.projectDialog) {
-      this.elements.projectDialog.close();
-    }
+    if (this.elements.projectDialog) this.elements.projectDialog.close();
   },
 
-  /**
-   * Opens the Task Detail Modal
-   * @param {Object} todo
-   * @param {string} projectName
-   */
   openDetailModal(todo, projectName = '') {
     if (!this.elements.detailDialog) this.initElements();
 
@@ -272,11 +309,9 @@ export const displayController = {
     dateEl.textContent = todo.dueDate ? this.formatDisplayDate(todo.dueDate) : 'No due date';
     projectEl.textContent = projectName;
 
-    // Priority Badge
     priorityBadge.className = `badge priority-${todo.priority}`;
     priorityBadge.textContent = `${todo.priority} priority`;
 
-    // Status Badge
     if (todo.completed) {
       statusBadge.className = 'badge';
       statusBadge.style.backgroundColor = '#dcfce7';
@@ -289,7 +324,6 @@ export const displayController = {
       statusBadge.textContent = 'In Progress';
     }
 
-    // Attach IDs to the Edit button inside detail modal
     if (editBtn) {
       editBtn.dataset.todoId = todo.id;
       editBtn.dataset.projectId = todo.projectId;
@@ -299,12 +333,40 @@ export const displayController = {
   },
 
   closeDetailModal() {
-    if (this.elements.detailDialog) {
-      this.elements.detailDialog.close();
-    }
+    if (this.elements.detailDialog) this.elements.detailDialog.close();
   },
 
-  // Mobile sidebar controls
+  /**
+   * Displays a floating toast notification with optional action
+   */
+  showToast(message, actionText = '', actionCallback = null) {
+    if (!this.elements.toastContainer) this.initElements();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<span>${this.escapeHtml(message)}</span>`;
+
+    if (actionText && actionCallback) {
+      const btn = document.createElement('button');
+      btn.className = 'toast-undo-btn';
+      btn.textContent = actionText;
+      btn.addEventListener('click', () => {
+        actionCallback();
+        toast.remove();
+      });
+      toast.appendChild(btn);
+    }
+
+    this.elements.toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  },
+
   openSidebar() {
     if (this.elements.sidebar) this.elements.sidebar.classList.add('open');
     if (this.elements.sidebarBackdrop) this.elements.sidebarBackdrop.classList.add('active');
@@ -315,11 +377,6 @@ export const displayController = {
     if (this.elements.sidebarBackdrop) this.elements.sidebarBackdrop.classList.remove('active');
   },
 
-  /**
-   * Formats ISO date 'YYYY-MM-DD' into human-friendly 'MMM D, YYYY'
-   * @param {string} dateString
-   * @returns {string}
-   */
   formatDisplayDate(dateString) {
     if (!dateString) return '';
     try {
@@ -328,16 +385,12 @@ export const displayController = {
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
       });
     } catch {
       return dateString;
     }
   },
 
-  /**
-   * Helper to sanitize text preventing XSS
-   */
   escapeHtml(str) {
     if (!str) return '';
     return str
@@ -348,4 +401,3 @@ export const displayController = {
       .replace(/'/g, '&#039;');
   },
 };
-
