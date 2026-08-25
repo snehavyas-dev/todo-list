@@ -1,27 +1,21 @@
 import './styles/style.css';
 import { projectManager } from './modules/projectManager.js';
+import { storageManager } from './modules/storage.js';
 
-// 1. Initialize default state
-projectManager.initDefaultState();
-console.log('--- Initial State ---');
-console.log('Projects:', projectManager.getProjects());
-console.log('Active Project:', projectManager.getActiveProject());
+// Application Initialization Pattern
+console.log('--- Testing Storage & State Lifecycle ---');
 
-// 2. Add a new Project
-const college = projectManager.addProject('College');
-console.log('Added Project:', college);
+// 1. Attempt to load existing state from localStorage
+const savedState = storageManager.loadState();
 
-// 3. Add a Todo to the new Project
-const mathTask = projectManager.addTodo(college.id, {
-  title: 'Complete Calculus Assignment',
-  dueDate: '2026-09-01',
-  priority: 'high',
-});
-console.log('Added Todo:', mathTask);
+if (savedState) {
+  console.log('📦 Existing data found in localStorage. Rehydrating state...');
+  projectManager.loadState(savedState);
+} else {
+  console.log('🌱 No prior data found. Initializing default projects and tasks...');
+  projectManager.initDefaultState();
+  storageManager.saveState(projectManager.getState());
+}
 
-// 4. Toggle completion
-projectManager.toggleTodoComplete(college.id, mathTask.id);
-console.log('After Toggling Complete:', projectManager.getTodo(college.id, mathTask.id));
-
-// 5. Test State snapshot for storage
-console.log('Full State Snapshot:', projectManager.getState());
+console.log('Current Active Project:', projectManager.getActiveProject());
+console.log('All Projects in Memory:', projectManager.getProjects());

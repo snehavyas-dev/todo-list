@@ -307,3 +307,4 @@ export const projectManager = {
     activeProjectId = activeProjectExists ? savedState.activeProjectId : projects[0].id;
   },
 };
+
