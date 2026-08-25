@@ -4,11 +4,200 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= htmlWebpackPlugin.options.title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="app">
-    <!-- App layout will mount here -->
+  <div class="app-layout">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <button id="mobile-menu-toggle" class="btn-icon mobile-only" aria-label="Toggle navigation menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="logo-text">TaskFlow</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btn-open-new-task" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Task</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container (Sidebar + Content Workspace) -->
+    <div class="app-body">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-header">
+            <h2 class="sidebar-title">Projects</h2>
+            <button id="btn-open-new-project" class="btn-icon" title="Create New Project" aria-label="Create New Project">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
+          <ul class="project-list" id="project-list" role="list">
+            <!-- Projects dynamically rendered here -->
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Sidebar Backdrop for Mobile Overlay -->
+      <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+      <!-- Main Workspace -->
+      <main class="main-workspace">
+        <div class="workspace-header">
+          <div class="workspace-title-area">
+            <h1 class="project-title" id="active-project-title">Inbox</h1>
+            <p class="project-stats" id="project-stats">0 tasks remaining</p>
+          </div>
+          <div class="workspace-actions" id="project-actions">
+            <!-- Project delete button (if non-default) rendered here -->
+          </div>
+        </div>
+
+        <!-- Task List Container -->
+        <div class="tasks-wrapper">
+          <ul class="task-list" id="task-list" role="list">
+            <!-- Task cards dynamically rendered here -->
+          </ul>
+
+          <!-- Empty State Container -->
+          <div class="empty-state hidden" id="empty-state">
+            <div class="empty-state-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            </div>
+            <h3 class="empty-state-title">No tasks in this project yet</h3>
+            <p class="empty-state-description">Add your first task to stay organized and productive.</p>
+            <button id="btn-empty-add-task" class="btn btn-secondary">+ Add a Task</button>
+          </div>
+        </div>
+      </main>
+    </div>
   </div>
+
+  <!-- Task Modal Dialog (Create & Edit) -->
+  <dialog id="task-dialog" class="modal-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="task-dialog-heading">Create Task</h2>
+        <button id="btn-close-task-dialog" class="btn-icon" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="task-form" class="modal-form" method="dialog">
+        <input type="hidden" id="task-input-id" name="id">
+        <input type="hidden" id="task-input-project-id" name="projectId">
+
+        <div class="form-group">
+          <label for="task-input-title" class="form-label">Task Title <span class="required">*</span></label>
+          <input type="text" id="task-input-title" name="title" class="form-input" placeholder="e.g., Complete project proposal" required maxlength="100">
+        </div>
+
+        <div class="form-group">
+          <label for="task-input-description" class="form-label">Description</label>
+          <textarea id="task-input-description" name="description" class="form-textarea" rows="3" placeholder="Add extra details, context, or subtasks..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-input-due-date" class="form-label">Due Date</label>
+            <input type="date" id="task-input-due-date" name="dueDate" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="task-input-priority" class="form-label">Priority</label>
+            <select id="task-input-priority" name="priority" class="form-select">
+              <option value="low">Low Priority</option>
+              <option value="medium" selected>Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-input-notes" class="form-label">Notes</label>
+          <textarea id="task-input-notes" name="notes" class="form-textarea" rows="2" placeholder="Helpful links, references, or checklists..."></textarea>
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" id="btn-cancel-task" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btn-submit-task" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Project Modal Dialog -->
+  <dialog id="project-dialog" class="modal-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2>New Project</h2>
+        <button id="btn-close-project-dialog" class="btn-icon" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="project-form" class="modal-form" method="dialog">
+        <div class="form-group">
+          <label for="project-input-name" class="form-label">Project Name <span class="required">*</span></label>
+          <input type="text" id="project-input-name" name="name" class="form-input" placeholder="e.g., Work, Personal, College" required maxlength="50">
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" id="btn-cancel-project" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btn-submit-project" class="btn btn-primary">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Task Detail View Modal (Read-only quick inspect) -->
+  <dialog id="detail-dialog" class="modal-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <div class="detail-header-tags">
+          <span id="detail-priority-badge" class="badge">Medium</span>
+          <span id="detail-status-badge" class="badge">In Progress</span>
+        </div>
+        <button id="btn-close-detail-dialog" class="btn-icon" aria-label="Close details">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="detail-body">
+        <h2 id="detail-title" class="detail-title">Task Title</h2>
+        <div class="detail-meta">
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Due Date:</span>
+            <span id="detail-due-date" class="detail-meta-val">No due date</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Project:</span>
+            <span id="detail-project-name" class="detail-meta-val">Inbox</span>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h4 class="detail-section-title">Description</h4>
+          <p id="detail-description" class="detail-text">No description provided.</p>
+        </div>
+        <div class="detail-section">
+          <h4 class="detail-section-title">Notes</h4>
+          <p id="detail-notes" class="detail-text">No notes provided.</p>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="btn-detail-edit" class="btn btn-primary">Edit Task</button>
+        <button type="button" id="btn-detail-close" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>
-

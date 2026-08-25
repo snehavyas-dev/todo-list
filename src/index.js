@@ -1,21 +1,31 @@
 import './styles/style.css';
 import { projectManager } from './modules/projectManager.js';
 import { storageManager } from './modules/storage.js';
+import { displayController } from './modules/displayController.js';
 
-// Application Initialization Pattern
-console.log('--- Testing Storage & State Lifecycle ---');
-
-// 1. Attempt to load existing state from localStorage
+// 1. Initialize State & Storage
 const savedState = storageManager.loadState();
 
 if (savedState) {
-  console.log('📦 Existing data found in localStorage. Rehydrating state...');
   projectManager.loadState(savedState);
 } else {
-  console.log('🌱 No prior data found. Initializing default projects and tasks...');
   projectManager.initDefaultState();
   storageManager.saveState(projectManager.getState());
 }
 
-console.log('Current Active Project:', projectManager.getActiveProject());
-console.log('All Projects in Memory:', projectManager.getProjects());
+// 2. Initial Render
+function updateUI() {
+  const projects = projectManager.getProjects();
+  const activeProjectId = projectManager.getActiveProjectId();
+  const activeProject = projectManager.getActiveProject();
+
+  displayController.renderProjects(projects, activeProjectId);
+  displayController.renderActiveProject(activeProject);
+}
+
+// Ensure DOM is ready and render
+document.addEventListener('DOMContentLoaded', () => {
+  displayController.initElements();
+  updateUI();
+  console.log('UI successfully rendered to DOM.');
+});
