@@ -59,12 +59,17 @@ export const displayController = {
   renderSmartViews(counts, activeViewId) {
     if (!this.elements.smartViewsList) this.initElements();
 
-    if (this.elements.countInbox) this.elements.countInbox.textContent = counts.inbox;
-    if (this.elements.countToday) this.elements.countToday.textContent = counts.today;
-    if (this.elements.countUpcoming) this.elements.countUpcoming.textContent = counts.upcoming;
-    if (this.elements.countHighPriority) this.elements.countHighPriority.textContent = counts.highPriority;
+    if (this.elements.countInbox)
+      this.elements.countInbox.textContent = counts.inbox;
+    if (this.elements.countToday)
+      this.elements.countToday.textContent = counts.today;
+    if (this.elements.countUpcoming)
+      this.elements.countUpcoming.textContent = counts.upcoming;
+    if (this.elements.countHighPriority)
+      this.elements.countHighPriority.textContent = counts.highPriority;
 
-    const smartItems = this.elements.smartViewsList.querySelectorAll('.nav-item');
+    const smartItems =
+      this.elements.smartViewsList.querySelectorAll('.nav-item');
     smartItems.forEach((item) => {
       const view = item.dataset.view;
       if (view === activeViewId) {
@@ -115,7 +120,8 @@ export const displayController = {
     // 1. Title & Color Indicator
     this.elements.activeProjectTitle.textContent = viewData.title;
     if (this.elements.headerColorDot) {
-      this.elements.headerColorDot.style.backgroundColor = viewData.projectColor;
+      this.elements.headerColorDot.style.backgroundColor =
+        viewData.projectColor;
       this.elements.headerColorDot.style.boxShadow = `0 0 10px ${viewData.projectColor}66`;
     }
 
@@ -136,7 +142,11 @@ export const displayController = {
     // 3. Delete Project Action (only if custom project)
     if (this.elements.projectActions) {
       this.elements.projectActions.innerHTML = '';
-      if (!viewData.isSmartView && viewData.project && !viewData.project.isDefault) {
+      if (
+        !viewData.isSmartView &&
+        viewData.project &&
+        !viewData.project.isDefault
+      ) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'btn-danger-outline';
         deleteBtn.dataset.action = 'delete-project';
@@ -174,7 +184,9 @@ export const displayController = {
       card.dataset.todoId = todo.id;
       card.dataset.projectId = todo.projectId;
 
-      const formattedDate = todo.dueDate ? this.formatDisplayDate(todo.dueDate) : '';
+      const formattedDate = todo.dueDate
+        ? this.formatDisplayDate(todo.dueDate)
+        : '';
 
       // Project tag label if in a multi-project smart view
       const projectObj = projects.find((p) => p.id === todo.projectId);
@@ -229,7 +241,12 @@ export const displayController = {
   /**
    * Opens the Task Modal with pre-populated project dropdown options
    */
-  openTaskModal(mode = 'create', taskData = null, defaultProjectId = '', projects = []) {
+  openTaskModal(
+    mode = 'create',
+    taskData = null,
+    defaultProjectId = '',
+    projects = [],
+  ) {
     if (!this.elements.taskDialog) this.initElements();
     this.elements.taskForm.reset();
 
@@ -256,7 +273,8 @@ export const displayController = {
       this.elements.taskDialogHeading.textContent = 'Edit Task';
       idInput.value = taskData.id;
       projectInput.value = taskData.projectId;
-      if (this.elements.taskProjectSelect) this.elements.taskProjectSelect.value = taskData.projectId;
+      if (this.elements.taskProjectSelect)
+        this.elements.taskProjectSelect.value = taskData.projectId;
       titleInput.value = taskData.title;
       descInput.value = taskData.description || '';
       dateInput.value = taskData.dueDate || '';
@@ -265,9 +283,13 @@ export const displayController = {
     } else {
       this.elements.taskDialogHeading.textContent = 'Create Task';
       idInput.value = '';
-      const chosenProj = defaultProjectId && !defaultProjectId.startsWith('view-') ? defaultProjectId : (projects[0]?.id || 'inbox-default');
+      const chosenProj =
+        defaultProjectId && !defaultProjectId.startsWith('view-')
+          ? defaultProjectId
+          : projects[0]?.id || 'inbox-default';
       projectInput.value = chosenProj;
-      if (this.elements.taskProjectSelect) this.elements.taskProjectSelect.value = chosenProj;
+      if (this.elements.taskProjectSelect)
+        this.elements.taskProjectSelect.value = chosenProj;
       priorityInput.value = 'medium';
     }
 
@@ -306,7 +328,9 @@ export const displayController = {
     titleEl.textContent = todo.title;
     descEl.textContent = todo.description || 'No description provided.';
     notesEl.textContent = todo.notes || 'No notes provided.';
-    dateEl.textContent = todo.dueDate ? this.formatDisplayDate(todo.dueDate) : 'No due date';
+    dateEl.textContent = todo.dueDate
+      ? this.formatDisplayDate(todo.dueDate)
+      : 'No due date';
     projectEl.textContent = projectName;
 
     priorityBadge.className = `badge priority-${todo.priority}`;
@@ -369,12 +393,14 @@ export const displayController = {
 
   openSidebar() {
     if (this.elements.sidebar) this.elements.sidebar.classList.add('open');
-    if (this.elements.sidebarBackdrop) this.elements.sidebarBackdrop.classList.add('active');
+    if (this.elements.sidebarBackdrop)
+      this.elements.sidebarBackdrop.classList.add('active');
   },
 
   closeSidebar() {
     if (this.elements.sidebar) this.elements.sidebar.classList.remove('open');
-    if (this.elements.sidebarBackdrop) this.elements.sidebarBackdrop.classList.remove('active');
+    if (this.elements.sidebarBackdrop)
+      this.elements.sidebarBackdrop.classList.remove('active');
   },
 
   formatDisplayDate(dateString) {

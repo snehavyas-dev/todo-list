@@ -60,13 +60,17 @@ export const appController = {
       displayController.openTaskModal('create', null, activeViewId, projects());
     };
 
-    if (btnOpenNewTask) btnOpenNewTask.addEventListener('click', handleOpenNewTask);
-    if (btnEmptyAddTask) btnEmptyAddTask.addEventListener('click', handleOpenNewTask);
+    if (btnOpenNewTask)
+      btnOpenNewTask.addEventListener('click', handleOpenNewTask);
+    if (btnEmptyAddTask)
+      btnEmptyAddTask.addEventListener('click', handleOpenNewTask);
 
     // 2. New Project Button
     const btnOpenNewProject = document.getElementById('btn-open-new-project');
     if (btnOpenNewProject) {
-      btnOpenNewProject.addEventListener('click', () => displayController.openProjectModal());
+      btnOpenNewProject.addEventListener('click', () =>
+        displayController.openProjectModal(),
+      );
     }
 
     // 3. Smart Views Selection (Event Delegation on #smart-views-list)
@@ -133,10 +137,17 @@ export const appController = {
 
         // Toggle Complete
         if (action === 'toggle-complete') {
-          const isCompleted = projectManager.toggleTodoComplete(projectId, todoId);
+          const isCompleted = projectManager.toggleTodoComplete(
+            projectId,
+            todoId,
+          );
           this.persist();
           this.renderAll();
-          displayController.showToast(isCompleted ? 'Task marked complete! 🎉' : 'Task marked in progress.');
+          displayController.showToast(
+            isCompleted
+              ? 'Task marked complete! 🎉'
+              : 'Task marked in progress.',
+          );
           return;
         }
 
@@ -154,7 +165,12 @@ export const appController = {
         if (action === 'edit-task') {
           const todo = projectManager.getTodo(projectId, todoId);
           if (todo) {
-            displayController.openTaskModal('edit', todo, projectId, projects());
+            displayController.openTaskModal(
+              'edit',
+              todo,
+              projectId,
+              projects(),
+            );
           }
           return;
         }
@@ -187,7 +203,12 @@ export const appController = {
         const { projectId } = btn.dataset;
         const project = projectManager.getProjectById(projectId);
 
-        if (project && window.confirm(`Delete project "${project.name}" and all associated tasks?`)) {
+        if (
+          project &&
+          window.confirm(
+            `Delete project "${project.name}" and all associated tasks?`,
+          )
+        ) {
           projectManager.deleteProject(projectId);
           this.persist();
           this.renderAll();
@@ -203,7 +224,9 @@ export const appController = {
         e.preventDefault();
 
         const idInput = document.getElementById('task-input-id');
-        const projectSelect = document.getElementById('task-input-project-select');
+        const projectSelect = document.getElementById(
+          'task-input-project-select',
+        );
         const titleInput = document.getElementById('task-input-title');
         const descInput = document.getElementById('task-input-description');
         const dateInput = document.getElementById('task-input-due-date');
@@ -214,7 +237,8 @@ export const appController = {
         if (!title) return;
 
         const taskId = idInput.value;
-        const targetProjectId = projectSelect.value || projectManager.getProjects()[0].id;
+        const targetProjectId =
+          projectSelect.value || projectManager.getProjects()[0].id;
 
         const taskData = {
           title,
@@ -245,7 +269,9 @@ export const appController = {
         e.preventDefault();
 
         const nameInput = document.getElementById('project-input-name');
-        const colorRadio = projectForm.querySelector('input[name="projectColor"]:checked');
+        const colorRadio = projectForm.querySelector(
+          'input[name="projectColor"]:checked',
+        );
         const name = nameInput.value.trim();
         const color = colorRadio ? colorRadio.value : '#6366f1';
 
@@ -265,19 +291,32 @@ export const appController = {
     // 12. Mobile Sidebar & Drawer Controls
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-    if (mobileMenuToggle) mobileMenuToggle.addEventListener('click', () => displayController.openSidebar());
-    if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', () => displayController.closeSidebar());
+    if (mobileMenuToggle)
+      mobileMenuToggle.addEventListener('click', () =>
+        displayController.openSidebar(),
+      );
+    if (sidebarBackdrop)
+      sidebarBackdrop.addEventListener('click', () =>
+        displayController.closeSidebar(),
+      );
 
     // 13. Keyboard Shortcuts (N / Q for New Task, / for Search)
     document.addEventListener('keydown', (e) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      const activeTag = document.activeElement
+        ? document.activeElement.tagName.toLowerCase()
+        : '';
       if (['input', 'textarea', 'select'].includes(activeTag)) return;
 
       if (e.key === '/' || e.key === '?') {
         e.preventDefault();
         const search = document.getElementById('global-search');
         if (search) search.focus();
-      } else if (e.key === 'n' || e.key === 'N' || e.key === 'q' || e.key === 'Q') {
+      } else if (
+        e.key === 'n' ||
+        e.key === 'N' ||
+        e.key === 'q' ||
+        e.key === 'Q'
+      ) {
         e.preventDefault();
         handleOpenNewTask();
       }
@@ -287,20 +326,42 @@ export const appController = {
   bindModalCloseHandlers() {
     const btnCloseTaskDialog = document.getElementById('btn-close-task-dialog');
     const btnCancelTask = document.getElementById('btn-cancel-task');
-    if (btnCloseTaskDialog) btnCloseTaskDialog.addEventListener('click', () => displayController.closeTaskModal());
-    if (btnCancelTask) btnCancelTask.addEventListener('click', () => displayController.closeTaskModal());
+    if (btnCloseTaskDialog)
+      btnCloseTaskDialog.addEventListener('click', () =>
+        displayController.closeTaskModal(),
+      );
+    if (btnCancelTask)
+      btnCancelTask.addEventListener('click', () =>
+        displayController.closeTaskModal(),
+      );
 
-    const btnCloseProjectDialog = document.getElementById('btn-close-project-dialog');
+    const btnCloseProjectDialog = document.getElementById(
+      'btn-close-project-dialog',
+    );
     const btnCancelProject = document.getElementById('btn-cancel-project');
-    if (btnCloseProjectDialog) btnCloseProjectDialog.addEventListener('click', () => displayController.closeProjectModal());
-    if (btnCancelProject) btnCancelProject.addEventListener('click', () => displayController.closeProjectModal());
+    if (btnCloseProjectDialog)
+      btnCloseProjectDialog.addEventListener('click', () =>
+        displayController.closeProjectModal(),
+      );
+    if (btnCancelProject)
+      btnCancelProject.addEventListener('click', () =>
+        displayController.closeProjectModal(),
+      );
 
-    const btnCloseDetailDialog = document.getElementById('btn-close-detail-dialog');
+    const btnCloseDetailDialog = document.getElementById(
+      'btn-close-detail-dialog',
+    );
     const btnDetailClose = document.getElementById('btn-detail-close');
     const btnDetailEdit = document.getElementById('btn-detail-edit');
 
-    if (btnCloseDetailDialog) btnCloseDetailDialog.addEventListener('click', () => displayController.closeDetailModal());
-    if (btnDetailClose) btnDetailClose.addEventListener('click', () => displayController.closeDetailModal());
+    if (btnCloseDetailDialog)
+      btnCloseDetailDialog.addEventListener('click', () =>
+        displayController.closeDetailModal(),
+      );
+    if (btnDetailClose)
+      btnDetailClose.addEventListener('click', () =>
+        displayController.closeDetailModal(),
+      );
 
     if (btnDetailEdit) {
       btnDetailEdit.addEventListener('click', () => {
@@ -308,7 +369,12 @@ export const appController = {
         displayController.closeDetailModal();
         const todo = projectManager.getTodo(projectId, todoId);
         if (todo) {
-          displayController.openTaskModal('edit', todo, projectId, projectManager.getProjects());
+          displayController.openTaskModal(
+            'edit',
+            todo,
+            projectId,
+            projectManager.getProjects(),
+          );
         }
       });
     }

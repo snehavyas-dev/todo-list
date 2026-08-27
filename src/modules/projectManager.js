@@ -34,16 +34,19 @@ export const projectManager = {
 
     const task1 = createTodo({
       title: 'Welcome to TaskFlow Pro! 👋',
-      description: 'Click this card to view details, edit fields, or mark complete.',
+      description:
+        'Click this card to view details, edit fields, or mark complete.',
       dueDate: todayStr,
       priority: 'high',
-      notes: 'Try out keyboard shortcuts: press / to search or N to create a new task.',
+      notes:
+        'Try out keyboard shortcuts: press / to search or N to create a new task.',
       projectId: inbox.id,
     });
 
     const task2 = createTodo({
       title: 'Explore Smart Views (Today & Upcoming)',
-      description: 'Tasks with due dates automatically appear in Today and Upcoming smart views.',
+      description:
+        'Tasks with due dates automatically appear in Today and Upcoming smart views.',
       dueDate: tomorrowStr,
       priority: 'medium',
       notes: 'Check the sidebar navigation for instant smart filters.',
@@ -62,7 +65,8 @@ export const projectManager = {
 
     const collegeTask1 = createTodo({
       title: 'CS450: Research Paper Draft',
-      description: 'Draft literature review on distributed systems architecture.',
+      description:
+        'Draft literature review on distributed systems architecture.',
       dueDate: nextWeekStr,
       priority: 'high',
       notes: 'Reference IEEE papers and system benchmarks.',
@@ -229,12 +233,18 @@ export const projectManager = {
     const todo = this.getTodo(projectId, todoId);
     if (!todo) throw new Error('Todo not found.');
 
-    if (updatedFields.title !== undefined) todo.title = updatedFields.title.trim();
-    if (updatedFields.description !== undefined) todo.description = updatedFields.description.trim();
-    if (updatedFields.dueDate !== undefined) todo.dueDate = updatedFields.dueDate;
-    if (updatedFields.priority !== undefined) todo.priority = updatedFields.priority.toLowerCase();
-    if (updatedFields.notes !== undefined) todo.notes = updatedFields.notes.trim();
-    if (updatedFields.completed !== undefined) todo.completed = Boolean(updatedFields.completed);
+    if (updatedFields.title !== undefined)
+      todo.title = updatedFields.title.trim();
+    if (updatedFields.description !== undefined)
+      todo.description = updatedFields.description.trim();
+    if (updatedFields.dueDate !== undefined)
+      todo.dueDate = updatedFields.dueDate;
+    if (updatedFields.priority !== undefined)
+      todo.priority = updatedFields.priority.toLowerCase();
+    if (updatedFields.notes !== undefined)
+      todo.notes = updatedFields.notes.trim();
+    if (updatedFields.completed !== undefined)
+      todo.completed = Boolean(updatedFields.completed);
 
     return todo;
   },
@@ -249,13 +259,19 @@ export const projectManager = {
     const next7DaysStr = next7Days.toISOString().split('T')[0];
 
     const allTodos = projects.flatMap((p) => p.todos);
-    const inboxTodos = (projects.find((p) => p.isDefault)?.todos || []);
+    const inboxTodos = projects.find((p) => p.isDefault)?.todos || [];
 
     return {
       inbox: inboxTodos.filter((t) => !t.completed).length,
-      today: allTodos.filter((t) => !t.completed && t.dueDate === todayStr).length,
-      upcoming: allTodos.filter((t) => !t.completed && t.dueDate > todayStr && t.dueDate <= next7DaysStr).length,
-      highPriority: allTodos.filter((t) => !t.completed && t.priority === 'high').length,
+      today: allTodos.filter((t) => !t.completed && t.dueDate === todayStr)
+        .length,
+      upcoming: allTodos.filter(
+        (t) =>
+          !t.completed && t.dueDate > todayStr && t.dueDate <= next7DaysStr,
+      ).length,
+      highPriority: allTodos.filter(
+        (t) => !t.completed && t.priority === 'high',
+      ).length,
     };
   },
 
@@ -268,11 +284,11 @@ export const projectManager = {
     next7Days.setDate(next7Days.getDate() + 7);
     const next7DaysStr = next7Days.toISOString().split('T')[0];
 
-    let title = 'Inbox';
+    let title;
     let isSmartView = false;
     let projectColor = '#6366f1';
     let targetProject = null;
-    let todos = [];
+    let todos;
 
     if (activeViewId === 'view-inbox') {
       targetProject = projects.find((p) => p.isDefault) || projects[0];
@@ -281,15 +297,21 @@ export const projectManager = {
     } else if (activeViewId === 'view-today') {
       title = 'Today';
       isSmartView = true;
-      todos = projects.flatMap((p) => p.todos).filter((t) => t.dueDate === todayStr);
+      todos = projects
+        .flatMap((p) => p.todos)
+        .filter((t) => t.dueDate === todayStr);
     } else if (activeViewId === 'view-upcoming') {
       title = 'Upcoming';
       isSmartView = true;
-      todos = projects.flatMap((p) => p.todos).filter((t) => t.dueDate >= todayStr && t.dueDate <= next7DaysStr);
+      todos = projects
+        .flatMap((p) => p.todos)
+        .filter((t) => t.dueDate >= todayStr && t.dueDate <= next7DaysStr);
     } else if (activeViewId === 'view-high-priority') {
       title = 'High Priority';
       isSmartView = true;
-      todos = projects.flatMap((p) => p.todos).filter((t) => t.priority === 'high');
+      todos = projects
+        .flatMap((p) => p.todos)
+        .filter((t) => t.priority === 'high');
     } else {
       targetProject = this.getProjectById(activeViewId);
       if (!targetProject) {
@@ -307,7 +329,7 @@ export const projectManager = {
         (t) =>
           t.title.toLowerCase().includes(searchQuery) ||
           t.description.toLowerCase().includes(searchQuery) ||
-          t.notes.toLowerCase().includes(searchQuery)
+          t.notes.toLowerCase().includes(searchQuery),
       );
     }
 
@@ -317,7 +339,8 @@ export const projectManager = {
     const total = todos.length;
     const completed = todos.filter((t) => t.completed).length;
     const pending = total - completed;
-    const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const progressPercent =
+      total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return {
       viewId: activeViewId,
@@ -347,13 +370,17 @@ export const projectManager = {
     }
     if (sortType === 'priority') {
       const weight = { high: 1, medium: 2, low: 3 };
-      return list.sort((a, b) => (weight[a.priority] || 4) - (weight[b.priority] || 4));
+      return list.sort(
+        (a, b) => (weight[a.priority] || 4) - (weight[b.priority] || 4),
+      );
     }
     if (sortType === 'name') {
       return list.sort((a, b) => a.title.localeCompare(b.title));
     }
     // Default: uncompleted first, then by creation date
-    return list.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+    return list.sort((a, b) =>
+      a.completed === b.completed ? 0 : a.completed ? 1 : -1,
+    );
   },
 
   getState() {
@@ -365,7 +392,11 @@ export const projectManager = {
   },
 
   loadState(savedState) {
-    if (!savedState || !Array.isArray(savedState.projects) || savedState.projects.length === 0) {
+    if (
+      !savedState ||
+      !Array.isArray(savedState.projects) ||
+      savedState.projects.length === 0
+    ) {
       this.initDefaultState();
       return;
     }
@@ -375,7 +406,7 @@ export const projectManager = {
         createTodo({
           ...todoData,
           projectId: projectData.id,
-        })
+        }),
       );
 
       return createProject({

@@ -82,29 +82,36 @@ To-do List/
 ## 🚀 How to Run Locally
 
 ### Prerequisites
+
 Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/your-username/todo-list.git
 cd todo-list
 ```
 
 ### 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Start the development server
+
 ```bash
 npm start
 ```
+
 The app will automatically open in your default browser at `http://localhost:8080`.
 
 ### 4. Build for production
+
 ```bash
 npm run build
 ```
+
 Production-ready files will be generated in the `/dist` directory.
 
 ---
@@ -129,6 +136,7 @@ displayController (Re-renders Pure DOM from State)
 ## 🧠 What I Learned
 
 During this project from **The Odin Project**, I practiced:
+
 1. **Separation of Concerns:** Keeping business logic completely decoupled from DOM manipulation.
 2. **Factory Functions vs. Classes:** Designing pure data objects with default parameters and validation.
 3. **Event Delegation:** Using a single listener on parent containers with `event.target.closest('[data-action]')` instead of attaching hundreds of listeners.
@@ -143,4 +151,3 @@ During this project from **The Odin Project**, I practiced:
 - [ ] Add drag-and-drop task reordering.
 - [ ] Add search / filter by priority or due date (Today / Upcoming / Overdue).
 - [ ] Add project color tag customization.
-
